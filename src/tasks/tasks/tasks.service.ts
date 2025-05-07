@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { Task } from '../entities/task.entity';
 import { UsersService } from '../../users/users/users.service';
 
@@ -30,11 +30,43 @@ export class TasksService {
   }
 
   // 获取任务列表
-  async findAll(filters?: any): Promise<Task[]> {
-    return this.taskRepository.find({
-      where: { ...filters },
+  async findAll(query: any) {
+    const { page = 1, pageSize = 10, role, tab, searchKey } = query;
+    
+    const skip = (Number(page) - 1) * Number(pageSize);
+    const take = Number(pageSize);
+
+    const whereConditions: any = {};
+    
+    // if (role) {
+    //   whereConditions.role = role;
+    // }
+    
+    if (tab !== undefined && tab !== null && tab !== '') {
+      whereConditions.status = Number(tab);
+    }
+    
+    if (searchKey && searchKey.trim() !== '') {
+      whereConditions.title = Like(`%${searchKey.trim()}%`);
+    }
+    
+
+    const [tasks, total] = await this.taskRepository.findAndCount({
+      skip,
+      take,
+      where: whereConditions,
       relations: ['employer'],
+      order: {
+        createdAt: 'DESC'
+      }
     });
+
+    return {
+      data: tasks,
+      total,
+      page: Number(page),
+      pageSize: Number(pageSize)
+    };
   }
 
   // 获取单个任务详情

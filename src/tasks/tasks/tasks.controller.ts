@@ -3,6 +3,14 @@ import { TasksService } from './tasks.service';
 import { Task } from '../entities/task.entity';
 import { CreateTaskDto } from '../dto/create-task.dto';
 
+interface TaskQuery {
+  page?: number;
+  pageSize?: number;
+  role?: string;
+  tab?: string;
+  searchKey?: string;
+}
+
 @Controller('tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
@@ -22,9 +30,8 @@ export class TasksController {
 
   // 获取任务列表
   @Get()
-  async findAll(@Query() query: any) {
-    const tasks = await this.tasksService.findAll(query);
-    return tasks;
+  async findAll(@Query() query: TaskQuery) {
+    return this.tasksService.findAll(query);
   }
 
   // 获取单个任务详情
